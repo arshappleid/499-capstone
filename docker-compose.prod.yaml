@@ -1,0 +1,142 @@
+version: '3.3'
+
+services:
+    backend_api:
+        build:
+            context: ./express_microservices/nginx
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - '3000:80'
+        depends_on:
+            - microservice_instructor
+            - microservice_student
+            - microservice_admin
+            - authentication_service
+        networks:
+            - subnet1
+
+    student_frontend:
+        build:
+            context: ./frontend/student_frontend/
+            dockerfile: Dockerfile
+        ports:
+            - '81:3000' # map local 8080 to container port 80
+        restart: always
+        environment:
+            backend_api: 'http://nginx:80/'
+            REACT_APP_BACKEND_API: 'http://161.35.234.81:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        networks:
+            - subnet1
+
+    instructor_frontend:
+        build:
+            context: ./frontend/instructor_frontend/
+            dockerfile: Dockerfile
+        ports:
+            - '82:3000' # map local 8080 to container port 80
+        restart: always
+        environment:
+            backend_api: 'http://nginx:80/'
+            REACT_APP_BACKEND_API: 'http://161.35.234.81:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        networks:
+            - subnet1
+
+    super_admin_frontend:
+        build:
+            context: ./frontend/super_admin_frontend/
+            dockerfile: Dockerfile
+        ports:
+            - '83:3000' # map local 8080 to container port 80
+        restart: always
+        environment:
+            backend_api: 'http://nginx:80/'
+            REACT_APP_BACKEND_API: 'http://161.35.234.81:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        networks:
+            - subnet1
+
+    database:
+        build: ./database
+        networks:
+            - subnet1
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 4s
+            timeout: 12s
+            retries: 4
+
+    microservice_instructor:
+        build:
+            context: ./express_microservices/instructor
+            dockerfile: Dockerfile
+        restart: always
+        depends_on:
+            - database
+        environment:
+            NODE_ENV: 'production'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    microservice_admin:
+        build:
+            context: ./express_microservices/admin
+            dockerfile: Dockerfile
+        restart: always
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            NODE_ENV: 'production'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    microservice_student:
+        build:
+            context: ./express_microservices/student
+            dockerfile: Dockerfile
+        restart: always
+        depends_on:
+            - database
+        environment:
+            NODE_ENV: 'production'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    authentication_service:
+        build:
+            context: ./express_microservices/authentication
+            dockerfile: Dockerfile
+        restart: always
+        depends_on:
+            - database
+        environment:
+            NODE_ENV: 'production'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            tokenExpirtationTime: '48h' ## 1 hour
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+networks:
+    subnet1:
+        ipam:
+            driver: default
+            config:
+                - subnet: '192.168.92.0/24' ## subnet has 24 open spots

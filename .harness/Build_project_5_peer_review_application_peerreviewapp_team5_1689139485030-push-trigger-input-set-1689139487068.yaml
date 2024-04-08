@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_project_5_peer_review_application_peerreviewapp_team5_1689139485030-push-trigger-input-set
+  identifier: Build_project_5_peer_review_application_peerreviewapp_team5_1689139485030pushtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: default_project
+  pipeline:
+    identifier: Build_project_5_peer_review_application_peerreviewapp_team5_1689139485030
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>

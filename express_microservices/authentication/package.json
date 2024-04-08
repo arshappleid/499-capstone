@@ -1,0 +1,34 @@
+{
+	"name": "mvc-exprees-microservice",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"start": "node server",
+		"dev": " port=3000 database_ip=localhost database_user=root database_password=password database_name=test_Database NODE_ENV=development nodemon server",
+		"tests": "NODE_ENV=test port=5000 vitest --globals --threads=false",
+		"tests detailed": "database_ip=localhost database_user=root database_password=password database_name=test_Database vitest --globals --reporter verbose",
+		"format": "prettier --write \"**/*.{ks,jsx,yml,yaml,json,css,scss,md}\""
+	},
+	"dependencies": {
+		"cookie-parser": "~1.4.4",
+		"cors": "2.8.5",
+		"crypto": "1.0.1",
+		"debug": "2.6.9",
+		"express": "^4.18.2",
+		"fs": "0.0.1-security",
+		"http-errors": "1.6.3",
+		"jade": "1.11.0",
+		"jsonwebtoken": "9.0.0",
+		"morgan": "1.9.1",
+		"mysql2": "3.3.3",
+		"nodemailer": "^6.9.4",
+		"path": "0.12.7",
+		"sequelize": "^6.32.0",
+		"sequelize-cli": "6.6.1"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.22",
+		"supertest": "^6.3.3",
+		"vitest": "^0.31.1"
+	}
+}

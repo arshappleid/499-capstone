@@ -1,0 +1,15 @@
+version : "3.9"
+
+services:
+    frontend:
+        build: ./
+        image: frontend
+        ports:
+            - "80:3000" ## map local 8080 to containor port 80
+        restart: always
+        environment:
+            NODE_TLS_REJECT_UNAUTHORIZED: "0"
+            SECRET_KEY: "abc123"
+            BACKEND_API: 'https://localhost:3001/'
+            
+

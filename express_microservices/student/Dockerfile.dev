@@ -1,0 +1,9 @@
+# Stage 1: Build the app
+FROM node:18-alpine3.17 AS build
+# Set working directory
+WORKDIR /app
+# Copy the source code of the Express.js app
+COPY . .
+ENV environment=development
+EXPOSE 3000
+CMD ["npm", "run","dev"]

@@ -1,0 +1,18 @@
+version : "3.9"
+
+services:
+    database:
+        build: ./
+        ports:
+            - "3306:3306"
+        networks:
+            subnet1:
+                ipv4_address: 192.168.92.4 # other containors inside the network will be able to reach the database at this ipv4_address
+
+
+networks:
+    subnet1:
+        ipam:
+            driver: default
+            config:
+                - subnet : "192.168.92.0/24" ## subnet has 24 open spots

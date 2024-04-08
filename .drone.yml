@@ -1,0 +1,85 @@
+kind: pipeline
+type: docker
+name: default
+
+trigger:
+    branch:
+        - staging_test
+        - uat
+        - master
+
+services:
+    - name: database
+      image: mysql:8.0.33
+      ports:
+          - 3306
+      environment:
+          MYSQL_ROOT_PASSWORD: password
+
+steps:
+    - name: Health Check Database
+      image: mysql:8.0.33
+      environment:
+          MYSQL_ROOT_PASSWORD: password
+      commands:
+          - while ! mysqladmin ping -h database -u drone -pdrone --silent; do sleep 1; done
+          - mysql -u root -p$MYSQL_ROOT_PASSWORD -h database < ./database/init.sql ## Manually run the init.sql script
+          - echo 'Init script copied successfully'
+          - mysql -u root -p$MYSQL_ROOT_PASSWORD -h database --execute="SELECT VERSION();" ## Check the version of the database
+
+    - name: Microservice_Atuthentication_Tests
+      image: node:18-alpine3.17
+      failure: ignore
+      depends_on:
+          - database
+      environment:
+          MYSQL_ROOT_PASSWORD: password
+          NODE_ENV: test ## Disables , JWT Auth
+          jwt_secret: 'this-is-my-secret'
+      commands:
+          - echo 'Starting tests...'
+          - sleep 25
+          - cd express_microservices/authentication/
+          - npm install --silent
+          - npm install --only=dev
+          - echo 'Packages installed successfully'
+          - ls api_tests/
+          - npm run tests
+
+    - name: Microservice_Student_Tests
+      image: node:18-alpine3.17
+      failure: ignore
+      depends_on:
+          - database
+      environment:
+          MYSQL_ROOT_PASSWORD: password
+          NODE_ENV: test ## Disables , JWT Auth
+          jwt_secret: 'this-is-my-secret'
+      commands:
+          - echo 'Starting tests...'
+          - sleep 25
+          - cd express_microservices/student
+          - npm install --silent
+          - npm install --only=dev --silent
+          - echo 'Packages installed successfully'
+          - ls api_tests/
+          - npm run tests
+
+    - name: Microservice_Instructor_Tests
+      image: node:18-alpine3.17
+      failure: ignore
+      depends_on:
+          - database
+      environment:
+          MYSQL_ROOT_PASSWORD: password
+          NODE_ENV: test ## Disables , JWT Auth
+          jwt_secret: 'this-is-my-secret'
+      commands:
+          - echo 'Starting tests...'
+          - sleep 25
+          - cd express_microservices/instructor
+          - npm install --silent
+          - npm install --only=dev --silent
+          - echo 'Packages installed successfully'
+          - ls api_tests/
+          - npm run tests

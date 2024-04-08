@@ -1,0 +1,202 @@
+version: '3.9'
+
+services:
+    nginx:
+        build: ./express_microservices/nginx
+        ports:
+            - '3000:80'
+        restart: always
+        volumes:
+            - ./express_microservices/nginx/nginx.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - microservice_instructor
+            - microservice_student
+        networks:
+            - subnet1
+
+    student_frontend:
+        build:
+            context: ./frontend/student_frontend/
+            dockerfile: Dockerfile.dev
+        ports:
+            - '80:3000' ## map local 8080 to containor port 80
+        restart: always
+        environment:
+            REACT_APP_BACKEND_API: 'http://localhost:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        volumes:
+            - ./frontend/student_frontend/node_modules:/app/node_modules
+            - ./frontend/student_frontend/package.json:/app/package.json
+            - ./frontend/student_frontend/src:/app/src
+        depends_on:
+            - nginx
+        networks:
+            - subnet1
+
+    instructor_frontend:
+        build:
+            context: ./frontend/instructor_frontend/
+            dockerfile: Dockerfile.dev
+        ports:
+            - '85:3000' ## map local 8080 to containor port 80
+        restart: always
+        environment:
+            REACT_APP_BACKEND_API: 'http://localhost:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        volumes:
+            - ./frontend/instructor_frontend/node_modules:/app/node_modules
+            - ./frontend/instructor_frontend/package.json:/app/package.json
+            - ./frontend/instructor_frontend/src:/app/src
+        depends_on:
+            - 'database'
+        networks:
+            - subnet1
+
+    super_admin_frontend:
+        build:
+            context: ./frontend/super_admin_frontend/
+            dockerfile: Dockerfile.dev
+        ports:
+            - '90:3000' ## map local 8080 to containor port 80
+        restart: always
+        environment:
+            REACT_APP_BACKEND_API: 'http://localhost:3000/'
+            NODE_TLS_REJECT_UNAUTHORIZED: '0'
+        volumes:
+            - ./frontend/super_admin_frontend/node_modules:/app/node_modules
+            - ./frontend/super_admin_frontend/package.json:/app/package.json
+            - ./frontend/super_admin_frontend/src:/app/src
+        depends_on:
+            - 'database'
+        networks:
+            - subnet1
+
+    database:
+        build: ./database
+        ports:
+            - '3306:3306'
+        networks:
+            subnet1:
+                ipv4_address: 192.168.92.4 # other containors inside the network will be able to reach the database at this ipv4_address
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+            interval: 4s
+            timeout: 12s
+            retries: 4
+
+    microservice_instructor:
+        build:
+            context: ./express_microservices/instructor
+            dockerfile: Dockerfile.dev
+        restart: always
+        volumes:
+            - ./express_microservices/instructor/controllers:/app/controllers
+            - ./express_microservices/instructor/database:/app/database
+            - ./express_microservices/instructor/services:/app/services
+            - ./express_microservices/instructor/server.js:/app/server.js
+            - ./express_microservices/instructor/jwt_auth.js:/app/jwt_auth.js
+            - ./express_microservices/instructor/package.json:/app/package.json
+            - ./express_microservices/instructor/node_modules:/app/node_modules
+            - ./express_microservices/instructor/config:/app/config
+            - ./express_microservices/secret:/app/secret
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            database_ip: '192.168.92.4'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    microservice_student:
+        build:
+            context: ./express_microservices/student
+            dockerfile: Dockerfile.dev
+        restart: always
+        volumes:
+            - ./express_microservices/student/controllers:/app/controllers
+            - ./express_microservices/student/api_tests:/app/api_tests
+            - ./express_microservices/student/database:/app/database
+            - ./express_microservices/student/services:/app/services
+            - ./express_microservices/student/server.js:/app/server.js
+            - ./express_microservices/student/jwt_auth.js:/app/jwt_auth.js
+            - ./express_microservices/student/package.json:/app/package.json
+            - ./express_microservices/student/node_modules:/app/node_modules
+            - ./express_microservices/student/config:/app/config
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            database_ip: '192.168.92.4'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    microservice_admin:
+        build:
+            context: ./express_microservices/admin
+            dockerfile: Dockerfile.dev
+        restart: always
+        volumes:
+            - ./express_microservices/admin/controllers:/app/controllers
+            - ./express_microservices/admin/database:/app/database
+            - ./express_microservices/admin/api_tests:/app/api_tests
+            - ./express_microservices/admin/services:/app/services
+            - ./express_microservices/admin/server.js:/app/server.js
+            - ./express_microservices/admin/jwt_auth.js:/app/jwt_auth.js
+            - ./express_microservices/admin/package.json:/app/package.json
+            - ./express_microservices/admin/node_modules:/app/node_modules
+            - ./express_microservices/admin/config:/app/config
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            database_ip: '192.168.92.4'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            tokenExpirtationTime: '1h' ## 1 hour
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+    authentication_service:
+        build:
+            context: ./express_microservices/authentication
+            dockerfile: Dockerfile
+        restart: always
+        volumes:
+            - ./express_microservices/authentication/controllers:/app/controllers
+            - ./express_microservices/authentication/database:/app/database
+            - ./express_microservices/authentication/services:/app/services
+            - ./express_microservices/authentication/server.js:/app/server.js
+            - ./express_microservices/authentication/package.json:/app/package.json
+            - ./express_microservices/authentication/node_modules:/app/node_modules
+            - ./express_microservices/authentication/config:/app/config
+            - ./express_microservices/authentication/api_tests:/app/api_tests
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            database_ip: '192.168.92.4'
+            database_user: 'root'
+            database_password: 'password'
+            database_name: 'test_Database'
+            microservice_instructor_endpoint: 'http://192.168.92.6:3000/'
+            tokenExpirtationTime: '48h' ## 1 hour
+            jwt_secret: '4025fb7266c3248a5ec6af0142069002110bca4bb340c8d9d47bb8103604c487'
+        networks:
+            - subnet1
+
+networks:
+    subnet1:
+        ipam:
+            driver: default
+            config:
+                - subnet: '192.168.92.0/24'
