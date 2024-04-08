@@ -9,6 +9,8 @@ The students can register and anonymously evaluate other students in a group, wh
 
 Our Project Client is Parsa Rajabi, a UBCO graduate and is currently pursuing his masters degree in computer science at Simon Fraser university. Parsa’s research is mostly based on computer science education; How students learn Computer Science and how to improve the teaching methods to educate Computer science to students.
 
+!!! This is a fork from the [Original Repo](https://github.com/arshappleid/project-5-peer-review-application-peerreviewapp_team5) , please review this repo for list of all contributors and commit history. Current repo is only staged for viewing purposes.
+
 ## Folder Structure
 
 ```
@@ -28,17 +30,15 @@ Our Project Client is Parsa Rajabi, a UBCO graduate and is currently pursuing hi
 
 ## Running the docker containors
 
--   Make sure docker is running.
--   In the directory `capstone_project` run ` docker compose up -d` , supports hot reload;
-    -   For front end apps , just need to refresh the browser to pick up new changes.
-    -   For Backend go to Containor logs , if it says there is an error , simply restart the contianor.
+- Make sure docker is running.
+- In the directory `capstone_project` run ` docker compose up -d` , supports hot reload;
+  - For front end apps , just need to refresh the browser to pick up new changes.
+  - For Backend go to Containor logs , if it says there is an error , simply restart the contianor.
 
 ### Debugging Docker run issue
 
 1. Network pool overlaps - Run ` docker network ls` , select the network id for the network that you do not use , then run ` docker network remove #networkId` . Then re run ` docker compose up -d`.
-
 2. Error : `  Pool overlaps with other one on this address space`. Check no other containor is runnig on the ports. If they are delete them , and run `docker compose up` again.
-
 3. Port already in use - Run `lsof -i:portNum` , get the PID , and run
 
 ## Feature Development Github workflow:
